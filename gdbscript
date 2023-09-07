@@ -3,8 +3,9 @@ target remote localhost:1234
 set directories ./
 add-symbol-file ./build/platform/generic/firmware/fw_payload.elf 0x80000000
 add-symbol-file ./build/platform/generic/firmware/payloads/test.elf 0x80200000
-add-symbol-file ./build/platform/generic/firmware/payloads/mmstub/mmstub.elf 0x80C00000
+add-symbol-file ./build/platform/generic/firmware/payloads/mmstub/mmstub.elf 0x80B00000
 b sbi_hsm_hart_start_finish
-b *0x80C00000
+b *0x80B00000
 b sbi_init
+b mmstub_main
 tui enable

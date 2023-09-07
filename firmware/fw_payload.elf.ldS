@@ -28,6 +28,17 @@ SECTIONS
 		PROVIDE(_payload_end = .);
 	}
 
+#ifdef FW_PAYLOADMMSTUB_OFFSET
+	. = FW_TEXT_START + FW_PAYLOADMMSTUB_OFFSET;
+
+	.payloadmmstub :
+	{
+		PROVIDE(_payloadmmstub_start = .);
+		*(.payloadmmstub)
+		. = ALIGN(8);
+		PROVIDE(_payloadmmstub_end = .);
+        }
+#endif
 #ifdef FW_PAYLOADMM_OFFSET
 	. = FW_TEXT_START + FW_PAYLOADMM_OFFSET;
 

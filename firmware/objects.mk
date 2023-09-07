@@ -56,6 +56,8 @@ ifdef FW_PAYLOAD_OFFSET
 firmware-genflags-$(FW_PAYLOAD) += -DFW_PAYLOAD_OFFSET=$(FW_PAYLOAD_OFFSET)
 endif
 ifdef FW_PAYLOADMM_PATH
+firmware-genflags-$(FW_PAYLOAD) += -DFW_PAYLOADMMSTUB_PATH=\"$(platform_build_dir)/firmware/payloads/mmstub/mmstub.bin\"
+firmware-genflags-$(FW_PAYLOAD) += -DFW_PAYLOADMMSTUB_OFFSET=$(FW_PAYLOADMMSTUB_OFFSET)
 firmware-genflags-$(FW_PAYLOAD) += -DFW_PAYLOADMM_PATH=\"$(FW_PAYLOADMM_PATH)\"
 firmware-genflags-$(FW_PAYLOAD) += -DFW_PAYLOADMM_OFFSET=$(FW_PAYLOADMM_OFFSET)
 endif

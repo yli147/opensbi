@@ -95,6 +95,13 @@ payload_bin:
 #else
 	.incbin	FW_PAYLOAD_PATH
 #endif
+	.section .payloadmmstub, "ax", %progbits
+	.align 4
+	.globl payloadmmstub_bin
+payloadmmstub_bin:
+#ifdef FW_PAYLOADMMSTUB_PATH
+	.incbin	FW_PAYLOADMMSTUB_PATH
+#endif
 	.section .payloadmm, "ax", %progbits
 	.align 4
 	.globl payloadmm_bin
