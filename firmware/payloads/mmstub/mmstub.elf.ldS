@@ -8,7 +8,6 @@
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
-  
 SECTIONS
 {
 #ifdef FW_PAYLOADMMSTUB_OFFSET
