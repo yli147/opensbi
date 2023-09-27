@@ -249,7 +249,8 @@ static int rpxy_spm_send_message(struct sbi_rpxy_service_group *grp,
 {
 	sbi_printf("#### rpxy_spm_send_message %d %p %d %p %d %p ####\n", srv->id, tx, tx_len, rx, rx_len, ack_len);
 	if (RPMI_MM_SRV_MM_VERSION == srv->id) {
-		*((u32 *)rx) = MM_VERSION_COMPILED;
+		*((int32_t *)rx) = 0;
+		*((uint32_t *)(rx + sizeof(uint32_t))) = MM_VERSION_COMPILED;
 	} else if (RPMI_MM_SRV_MM_COMMUNICATE == srv->id) {
 		sbi_printf("#### rpxy_spm_send_message RPMI_MM_SRV_COMMUNICATE %d %p %d %p %d %p ####\n", srv->id, tx, tx_len, rx, rx_len, ack_len);
 		spm_sp_synchronous_entry(&mm_context);
