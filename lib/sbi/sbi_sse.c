@@ -25,7 +25,9 @@
 #include <sbi/sbi_console.h> /* TODO: REMOVE */
 
 enum sse_event_index {
-	SSE_LOCAL_RAS = 0,
+	SSE_LOCAL_RAS_0 = 0,
+	SSE_LOCAL_RAS_1,
+	SSE_LOCAL_RAS_RSVD,
 	SSE_LOCAL_PMU,
 	SSE_LOCAL_ASYNC_PF,
 	SSE_LOCAL_DEBUG,
@@ -78,8 +80,10 @@ static int sse_ipi_inject_send(unsigned long hartid, uint32_t event_id);
 static enum sse_event_index sse_event_idx(uint32_t event_id)
 {
 	switch (event_id) {
-	case SBI_SSE_EVENT_LOCAL_RAS:
-		return SSE_LOCAL_RAS;
+	case SBI_SSE_EVENT_LOCAL_RAS_0:
+		return SSE_LOCAL_RAS_0;
+	case SBI_SSE_EVENT_LOCAL_RAS_1:
+		return SSE_LOCAL_RAS_1;
 	case SBI_SSE_EVENT_LOCAL_PMU:
 		return SSE_LOCAL_PMU;
 	case SBI_SSE_EVENT_LOCAL_ASYNC_PF:

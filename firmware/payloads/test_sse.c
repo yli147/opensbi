@@ -179,11 +179,11 @@ static void sse_test_handler(void *arg)
 	if (first_time) {
 		first_time = 0;
 		SBI_ECALL_OUTVAL(SBI_EXT_SSE, SBI_EXT_SSE_INJECT,
-				SBI_SSE_EVENT_LOCAL_RAS, 0, 0, out);
+				SBI_SSE_EVENT_LOCAL_RAS_0, 0, 0, out);
 	}
 
 	SBI_ECALL_OUTVAL(SBI_EXT_SSE, SBI_EXT_SSE_COMPLETE,
-			       SBI_SSE_EVENT_LOCAL_RAS, 0, 0, out);
+			       SBI_SSE_EVENT_LOCAL_RAS_0, 0, 0, out);
 
 	out = out;
 }
@@ -200,21 +200,21 @@ void test_sse(void)
 	sbi_ecall_console_puts("Starting SSE test\n");
 
 	ret = SBI_ECALL_OUTVAL(SBI_EXT_SSE, SBI_EXT_SSE_REGISTER,
-			       SBI_SSE_EVENT_LOCAL_RAS, &ctx, 0, out);
+			       SBI_SSE_EVENT_LOCAL_RAS_0, &ctx, 0, out);
 	if (ret) {
 		sbi_ecall_console_puts("SSE Register failed\n");
 		return;
 	}
 
 	ret = SBI_ECALL_OUTVAL(SBI_EXT_SSE, SBI_EXT_SSE_ENABLE,
-			       SBI_SSE_EVENT_LOCAL_RAS, 0, 0, out);
+			       SBI_SSE_EVENT_LOCAL_RAS_0, 0, 0, out);
 	if (ret) {
 		sbi_ecall_console_puts("SSE Enable failed\n");
 		return;
 	}
 
 	ret = SBI_ECALL_OUTVAL(SBI_EXT_SSE, SBI_EXT_SSE_INJECT,
-			       SBI_SSE_EVENT_LOCAL_RAS, 0, 0, out);
+			       SBI_SSE_EVENT_LOCAL_RAS_0, 0, 0, out);
 	if (ret) {
 		sbi_ecall_console_puts("SSE Inject failed\n");
 		return;
