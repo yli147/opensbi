@@ -139,6 +139,7 @@ enum rpmi_servicegroup_id {
 	RPMI_SRVGRP_HSM = 0x00004,
 	RPMI_SRVGRP_CPPC = 0x00005,
 	RPMI_SRVGRP_CLOCK = 0x00007,
+	RPMI_SRVGRP_DDM_MM = 0x0000A,
 	RPMI_SRVGRP_ID_MAX_COUNT,
 };
 
@@ -536,6 +537,14 @@ struct rpmi_ras_sync_err_resp {
 	u32 returned;
 #define MAX_PEND_VECS	((RPMI_MSG_DATA_SIZE - (sizeof(u32) * 3)) / sizeof(u32))
 	u32 pending_vecs[MAX_PEND_VECS];
+};
+
+/** RPMI MM ServiceGroup Service IDs */
+enum rpmi_spm_mm_service_id {
+	RPMI_MM_SRV_MM_VERSION     = 0x01,
+	RPMI_MM_SRV_MM_COMMUNICATE = 0x02,
+	RPMI_MM_SRV_MM_COMPLETE    = 0x03,
+	RPMI_MM_SRV_MAX_COUNT,
 };
 
 #endif /* !__RPMI_MSGPROT_H__ */
