@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: BSD-2-Clause
+
+menu "Runtime Context Manager Support"
+
+config RUNTIME_CTX_MGMT
+	bool "Runtime Context Management"
+	default y
+
+endmenu
