@@ -12,6 +12,12 @@
 
 #include <sbi/sbi_types.h>
 
-void cm_context_switch(uint32_t security_state);
+#define SECURE          UL(0x0)
+#define NON_SECURE      UL(0x1)
+#define NUM_STATES      UL(0x2)
+#define sec_state_is_valid(s)	(((s) == SECURE) ||	\
+				((s) == NON_SECURE))
+
+int cm_context_switch(uint32_t security_state);
 
 #endif

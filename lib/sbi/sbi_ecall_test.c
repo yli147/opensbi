@@ -25,11 +25,11 @@ static int sbi_ecall_test_handler(unsigned long extid, unsigned long funcid,
 
 	switch (funcid) {
 	case SBI_EXT_SECURE_ENTER:
-		sbi_printf("sbi_ecall_test_handler: SBI_EXT_SECURE_ENTER\n",);
+		sbi_printf("sbi_ecall_test_handler: SBI_EXT_SECURE_ENTER\n");
 		ret = cm_context_switch(SECURE);
 		break;
 	case SBI_EXT_SECURE_EXIT:
-		sbi_printf("sbi_ecall_test_handler: SBI_EXT_SECURE_EXIT\n",);
+		sbi_printf("sbi_ecall_test_handler: SBI_EXT_SECURE_EXIT\n");
 		ret = cm_context_switch(NON_SECURE);
 		break;
 	default:
