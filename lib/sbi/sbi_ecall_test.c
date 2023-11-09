@@ -14,6 +14,7 @@
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_string.h>
 #include <sbi/sbi_test.h>
+#include <sbi_utils/cm/context_mgmr.h>
 
 static int sbi_ecall_test_handler(unsigned long extid, unsigned long funcid,
 				  const struct sbi_trap_regs *regs,
@@ -23,9 +24,13 @@ static int sbi_ecall_test_handler(unsigned long extid, unsigned long funcid,
 	int ret = 0;
 
 	switch (funcid) {
-	case SBI_EXT_TEST_CM_EXIT:
-		sbi_printf("sbi_ecall_test_handler: SBI_EXT_TEST_CM_EXIT\n");
-		//ret = sbi_domain_cm_exit(regs->a0, regs->a1, out_val);
+	case SBI_EXT_SECURE_ENTER:
+		sbi_printf("sbi_ecall_test_handler: SBI_EXT_SECURE_ENTER\n",);
+		ret = cm_context_switch(SECURE);
+		break;
+	case SBI_EXT_SECURE_EXIT:
+		sbi_printf("sbi_ecall_test_handler: SBI_EXT_SECURE_EXIT\n",);
+		ret = cm_context_switch(NON_SECURE);
 		break;
 	default:
 		ret = SBI_ENOTSUPP;

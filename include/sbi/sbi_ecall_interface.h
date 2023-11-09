@@ -301,7 +301,8 @@ enum sbi_cppc_reg_id {
 #define SBI_EXT_FIRMWARE_END                   0x0AFFFFFF
 
 /* SBI function IDs for TEST extension */
-#define SBI_EXT_TEST_CM_EXIT			0x0
+#define SBI_EXT_SECURE_ENTER 0x0
+#define SBI_EXT_SECURE_EXIT  0x1
 
 /* SBI return error codes */
 #define SBI_SUCCESS				0
