@@ -346,12 +346,14 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 		sbi_printf("%s: timer init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
 	}
-
+#if 0	
+sbi_printf("%s: rpxy init failed (error %d)\n", __func__, rc);
 	rc = sbi_rpxy_init(scratch);
 	if (rc) {
 		sbi_printf("%s: rpxy init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
 	}
+#endif
 
 	/*
 	 * Note: Finalize domains after HSM initialization so that we
@@ -359,13 +361,21 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 	 * Note: Finalize domains before HART PMP configuration so
 	 * that we use correct domain for configuring PMP.
 	 */
+sbi_printf("%s: sbi_domain_finalize init failed (error %d)\n", __func__, rc);	 
 	rc = sbi_domain_finalize(scratch, hartid);
 	if (rc) {
 		sbi_printf("%s: domain finalize failed (error %d)\n",
 			   __func__, rc);
 		sbi_hart_hang();
 	}
-
+#if 1
+	rc = sbi_rpxy_init(scratch);
+	if (rc) {
+		sbi_printf("%s: rpxy init failed (error %d)\n", __func__, rc);
+		sbi_hart_hang();
+	}
+#endif	
+	
 	/*
 	 * Note: Platform final initialization should be after finalizing
 	 * domains so that it sees correct domain assignment and PMP
