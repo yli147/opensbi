@@ -77,13 +77,18 @@ static void __noreturn startup_domain_context()
 	struct sbi_context *ctx	    = sbi_domain_context_thishart_ptr();
 	struct sbi_domain *dom	    = ctx->dom;
 
+	sbi_printf("%s:  dom->boot_hartid %d"
+				   " for %s before check harts\n",
+				   __func__, dom->boot_hartid, dom->name);
 	/* Check if possible HARTs are all assigned */
 	sbi_hartmask_for_each_hartindex(i, dom->possible_harts) {
 		/* If a HART is not assigned, stop the current HART */
 		if (!sbi_hartmask_test_hartindex(i, &dom->assigned_harts))
 			sbi_hsm_hart_stop(scratch, true);
 	}
-
+	sbi_printf("%s:  dom->boot_hartid %d"
+				   " for %s after check harts\n",
+				   __func__, dom->boot_hartid, dom->name);
 	/* Ensure startup is only executed once by a single executor */
 	spin_lock(&domain_startup_lock);
 	if (ctx->initialized) {
