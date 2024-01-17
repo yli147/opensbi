@@ -34,6 +34,7 @@
 #define SBI_EXT_CPPC				0x43505043
 #define SBI_EXT_RPXY				0x52505859
 #define SBI_EXT_TEST				0x54455354
+#define SBI_EXT_OPTEE				0x4F505445
 
 /* SBI function IDs for BASE extension*/
 #define SBI_EXT_BASE_GET_SPEC_VERSION		0x0

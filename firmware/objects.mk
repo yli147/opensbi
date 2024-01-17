@@ -66,3 +66,15 @@ endif
 ifdef FW_OPTIONS
 firmware-genflags-y += -DFW_OPTIONS=$(FW_OPTIONS)
 endif
+ifdef FW_OPTEE_TZDRAM_BASE
+firmware-genflags-y += -DFW_OPTEE_TZDRAM_BASE=$(FW_OPTEE_TZDRAM_BASE)
+endif
+ifdef FW_OPTEE_TZDRAM_SIZE
+firmware-genflags-y += -DFW_OPTEE_TZDRAM_SIZE=$(FW_OPTEE_TZDRAM_SIZE)
+endif
+ifdef FW_OPTEE_SHMEM_BASE
+firmware-genflags-y += -DFW_OPTEE_SHMEM_BASE=$(FW_OPTEE_SHMEM_BASE)
+endif
+ifdef FW_OPTEE_SHMEM_SIZE
+firmware-genflags-y += -DFW_OPTEE_SHMEM_SIZE=$(FW_OPTEE_SHMEM_SIZE)
+endif

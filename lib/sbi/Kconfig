@@ -54,4 +54,8 @@ config SBI_ECALL_TEST
 	bool "Test extensions"
 	default y
 
+config SBI_ECALL_OPTEE
+	bool "OPTEE extensions"
+	default y
+
 endmenu

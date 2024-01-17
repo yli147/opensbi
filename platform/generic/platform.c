@@ -161,6 +161,8 @@ static int generic_early_init(bool cold_boot)
 	return generic_plat->early_init(cold_boot, generic_plat_match);
 }
 
+extern void sm_init(bool cold_boot);
+extern void opteed_cpu_on_handler(uint32_t linear_id);
 static int generic_final_init(bool cold_boot)
 {
 	void *fdt;
@@ -172,9 +174,14 @@ static int generic_final_init(bool cold_boot)
 			return rc;
 	}
 
-	if (!cold_boot)
-		return 0;
+    if (!cold_boot) {
+        /* warm boot to setup optee ctx for secondary cpu */
+        unsigned int secondary_hartid;
 
+        secondary_hartid = current_hartid();
+        opteed_cpu_on_handler(secondary_hartid);
+		return 0;
+	}
 	fdt = fdt_get_address();
 
 	fdt_cpu_fixup(fdt);
@@ -188,6 +195,16 @@ static int generic_final_init(bool cold_boot)
 			return rc;
 	}
 
+    fdt = sbi_scratch_thishart_arg1_ptr();
+    sm_init(cold_boot);
+#if 0
+    // Check mcfg_info.tee to see whether tee present
+    if (csr_read(0xfc2) & 0x1) {
+        // Enable U-Mode to access all regions by setting spmpcfg0 and spmpaddr0
+        csr_write(0x1a0, 0x1f);
+        csr_write(0x1b0, 0xffffffff);
+    }
+#endif
 	return 0;
 }
 
