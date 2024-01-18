@@ -236,7 +236,6 @@ int pmp_set_keystone(int region_idx, uint8_t perm)
   /* TOR decoding with 2 registers */
   if(region_needs_two_entries(region_idx))
   {
-    sbi_printf("region_needs_two_entries for region %d\n", region_idx);
     n--;
     pmpcfg = 0;
     pmpaddr = region_get_addr(region_idx) >> 2;

@@ -19,9 +19,7 @@
 static int is_caller_non_secure(void)
 {
 	cpu_context_t *ctx;
-sbi_printf("%s: debug 1\n", __func__);
 	ctx = cm_get_next_context();
-sbi_printf("%s: debug 2 %p\n", __func__, ctx);
 	return (ctx->sec_attr == NON_SECURE);
 }
 
@@ -38,12 +36,10 @@ static int sbi_ecall_optee_handler(unsigned long extid, unsigned long funcid,
 	cpu_context_t *cpu_context;
 	uint32_t linear_id = current_hartid();
 	optee_context_t *optee_ctx = &opteed_sp_context[linear_id];
-sbi_printf("%s: ext=0x%lx func=0x%lx debug 1\n", __func__, extid, funcid);
 	/*
 	 * Determine which security state this SMC originated from
 	 */
 	if (is_caller_non_secure()) {
-sbi_printf("%s: ext=0x%lx func=0x%lx debug 2\n", __func__, extid, funcid);
 		/*
 		 * when linux send fastcall, M mode interrupt should be saved and disabled,
 		 * when tee finish the fastcall, M mode interrupt should be restore.
@@ -90,7 +86,6 @@ sbi_printf("%s: ext=0x%lx func=0x%lx debug 2\n", __func__, extid, funcid);
 		csr_clear(CSR_MIE, MIP_MSIP);
 		cm_restore_next_context(SECURE, 0);
 	}
-sbi_printf("%s: ext=0x%lx func=0x%lx debug 1 %x \n", __func__, extid, funcid, TEESMC_OPTEED_RETURN_ENTRY_DONE);
 	/*
 	 * Returning from OPTEE
 	 */
@@ -103,7 +98,6 @@ sbi_printf("%s: ext=0x%lx func=0x%lx debug 1 %x \n", __func__, extid, funcid, TE
 		 * Stash the OPTEE entry points information. This is done
 		 * only once on the primary cpu
 		 */
-		sbi_printf("%s: ext=0x%lx func=0x%lx debug 3\n", __func__, extid, funcid);
 		cm_gpregs_context_save(SECURE, regs);
 		cm_sysregs_context_save(SECURE);
 		assert(optee_vector_table == NULL);
@@ -143,7 +137,6 @@ sbi_printf("%s: ext=0x%lx func=0x%lx debug 1 %x \n", __func__, extid, funcid, TE
 	case TEESMC_OPTEED_RETURN_SUSPEND_DONE:
 	case TEESMC_OPTEED_RETURN_SYSTEM_OFF_DONE:
 	case TEESMC_OPTEED_RETURN_SYSTEM_RESET_DONE:
-		sbi_printf("%s: ext=0x%lx func=0x%lx debug 4\n", __func__, extid, funcid);
 		cm_gpregs_context_save(SECURE, regs);
 		cm_sysregs_context_save(SECURE);
 		/*
@@ -160,7 +153,6 @@ sbi_printf("%s: ext=0x%lx func=0x%lx debug 1 %x \n", __func__, extid, funcid, TE
 	 * either case execution should resume in the normal world.
 	 */
 	case TEESMC_OPTEED_RETURN_CALL_DONE:
-		sbi_printf("%s: ext=0x%lx func=0x%lx debug 5\n", __func__, extid, funcid);
 		/*
 		 * This is the result from the secure client of an
 		 * earlier request. The results are in x0-x3. Copy it
@@ -193,7 +185,6 @@ sbi_printf("%s: ext=0x%lx func=0x%lx debug 1 %x \n", __func__, extid, funcid, TE
 	 * should resume in the normal world.
 	 */
 	case TEESMC_OPTEED_RETURN_FIQ_DONE:
-		sbi_printf("%s: ext=0x%lx func=0x%lx debug 6\n", __func__, extid, funcid);
 		/* After forward FIQ, enable M mode timer/plic interrupt*/
 		cpu_context = cm_get_context(SECURE);
 		assert(cpu_context);
@@ -211,7 +202,6 @@ sbi_printf("%s: ext=0x%lx func=0x%lx debug 1 %x \n", __func__, extid, funcid, TE
 		/* never come to here! */
 		break;
 	default:
-		sbi_printf("unkown funid!,%lx\n",funcid);
 		sbi_hart_hang();
 	}
 

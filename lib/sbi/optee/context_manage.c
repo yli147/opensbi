@@ -283,10 +283,6 @@ void cm_set_next_context(void *context)
 
 void *cm_get_next_context(void)
 {
-	sbi_printf("%s: debug 1\n", __func__);
-	sbi_printf("%s: debug 2 %p\n", __func__, next_cpu_context_ptr);
-	sbi_printf("%s: debug 3 %d\n", __func__, current_hartid());
-	sbi_printf("%s: debug 4 %p\n", __func__, (void *)(next_cpu_context_ptr[current_hartid()]));
 	return next_cpu_context_ptr[current_hartid()];
 }
 
