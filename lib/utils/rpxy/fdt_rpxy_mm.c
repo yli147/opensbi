@@ -172,6 +172,25 @@ static int sbi_ecall_mm_domain_exit(void)
 	return 0;
 }
 
+struct rpmi_tee_tx {
+	unsigned long a0;
+	unsigned long a1;
+	unsigned long a2;
+	unsigned long a3;
+	unsigned long a4;
+	unsigned long a5;
+	unsigned long a6;
+	unsigned long a7;
+};
+
+struct rpmi_tee_rx {
+	unsigned long value;
+	unsigned long extp1;
+	unsigned long extp2;
+	unsigned long extp3;
+	unsigned long extp4;
+};
+
 static int mm_dispatch(struct sbi_rpxy_service_group *grp,
 				  struct sbi_rpxy_service *srv,
 				  void *tx, u32 tx_len,
@@ -179,16 +198,24 @@ static int mm_dispatch(struct sbi_rpxy_service_group *grp,
 				  unsigned long *ack_len)
 {
 	int srv_id = srv->id;
-
+	struct rpmi_tee_tx *stx = (struct rpmi_tee_tx *)0xF17F0000;
+	struct rpmi_tee_rx *srx = (struct rpmi_tee_rx *)0xF17F0000;
 	if (RPMI_MM_SRV_MM_VERSION == srv_id) {
 		*((int32_t *)rx)		       = 0;
 		*((uint32_t *)(rx + sizeof(uint32_t))) = MM_VERSION_COMPILED;
 	} else if (RPMI_MM_SRV_MM_COMMUNICATE == srv_id) {
+		memcpy(stx,tx,tx_len);
+		*ack_len = sizeof(struct rpmi_tee_tx);
+		sbi_printf("### sbi_rpxy_send_message mm communicate %lx %lx %lx %lx %lx %lx %lx %lx ###\n",
+			stx->a0,stx->a1,stx->a2,stx->a3,stx->a4,stx->a5,stx->a6,stx->a7);
 		sbi_ecall_mm_domain_enter();
 	} else if (RPMI_MM_SRV_MM_COMPLETE == srv_id) {
-		sbi_printf("### sbi_rpxy_send_message mm_dispatch before exit ###\n");
+		sbi_printf("### sbi_rpxy_send_message mm complete %lx %lx %lx %lx ###\n",
+			srx->extp1,srx->extp2,srx->extp3,srx->extp4);
+
+		memcpy(rx,srx,sizeof(struct rpmi_tee_rx));
+		*ack_len = sizeof(struct rpmi_tee_rx);
 		sbi_ecall_mm_domain_exit();
-		sbi_printf("### sbi_rpxy_send_message mm_dispatch after exit ###\n");
 	}
 	return 0;
 }
