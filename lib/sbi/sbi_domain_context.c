@@ -23,8 +23,10 @@
  * @param ctx pointer to the current HART context
  * @param dom_ctx pointer to the target domain context
  */
+//#define disable_irq() do {asm volatile ("csrr mstatus, 0x0");} while(0)
+//#define enable_irq() do {asm volatile ("csrr mstatus, 0x8");} while(0)
 static void switch_to_next_domain_context(struct sbi_context *ctx,
-					  struct sbi_context *dom_ctx)
+					  struct sbi_context *dom_ctx, int flag)
 {
 	u32 hartindex;
 	struct sbi_trap_regs *trap_regs;
@@ -57,7 +59,15 @@ static void switch_to_next_domain_context(struct sbi_context *ctx,
 	ctx->satp	= csr_swap(CSR_SATP, dom_ctx->satp);
 	ctx->scounteren = csr_swap(CSR_SCOUNTEREN, dom_ctx->scounteren);
 	ctx->senvcfg	= csr_swap(CSR_SENVCFG, dom_ctx->senvcfg);
-
+#if 1
+	if (flag) {
+	extern void _trap_handler_sec();
+	csr_write(CSR_MTVEC, &_trap_handler_sec);
+	} else {
+	extern void _trap_handler();
+	csr_write(CSR_MTVEC, &_trap_handler);
+	}
+#endif	
 	/* Save current trap state and restore target domain's trap state */
 	trap_regs = (struct sbi_trap_regs *)(csr_read(CSR_MSCRATCH) -
 					     SBI_TRAP_REGS_SIZE);
@@ -92,7 +102,7 @@ int sbi_domain_context_enter(struct sbi_domain *dom)
 	/* Update target context's previous context to indicate the caller */
 	dom_ctx->prev_ctx = ctx;
 
-	switch_to_next_domain_context(ctx, dom_ctx);
+	switch_to_next_domain_context(ctx, dom_ctx, 1);
 
 	return 0;
 }
@@ -123,7 +133,7 @@ int sbi_domain_context_exit(void)
 	if (!dom_ctx)
 		dom_ctx = sbi_hartindex_to_domain_context(hartindex, &root);
 
-	switch_to_next_domain_context(ctx, dom_ctx);
+	switch_to_next_domain_context(ctx, dom_ctx, 0);
 
 	return 0;
 }
