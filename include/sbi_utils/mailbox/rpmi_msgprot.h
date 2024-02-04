@@ -139,6 +139,7 @@ enum rpmi_servicegroup_id {
 	RPMI_SRVGRP_HSM = 0x00004,
 	RPMI_SRVGRP_CPPC = 0x00005,
 	RPMI_SRVGRP_CLOCK = 0x00007,
+	RPMI_SRVGRP_TEE = 0x0000A,
 	RPMI_SRVGRP_ID_MAX_COUNT,
 };
 
@@ -488,6 +489,20 @@ struct rpmi_clock_get_rate_resp {
 	s32 status;
 	u32 clock_rate_low;
 	u32 clock_rate_high;
+};
+
+/** TEE ServiceGroup Service IDs */
+enum tee_service_id {
+	RPMI_TEE_SRV_TEE_ATTR     = 0x01,
+	RPMI_TEE_SRV_TEE_COMMUNICATE = 0x02,
+	RPMI_TEE_SRV_TEE_COMPLETE    = 0x03,
+	RPMI_TEE_SRV_MAX_COUNT,
+};
+
+struct tee_get_attributes_resp {
+	s32 status;
+	u32 version;
+	u8 name[16];
 };
 
 #endif /* !__RPMI_MSGPROT_H__ */

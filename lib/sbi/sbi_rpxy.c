@@ -116,7 +116,7 @@ int sbi_rpxy_send_message(u32 transport_id,
 	struct rpxy_state *rs =
 		sbi_scratch_thishart_offset_ptr(rpxy_state_offset);
 
-	if (!rs->shmem_size)
+	if (message_data_len && !rs->shmem_size)
 		return SBI_ENOSHMEM;
 
 	grp = rpxy_find_group(transport_id, service_group_id);
