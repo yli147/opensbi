@@ -346,12 +346,13 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 		sbi_printf("%s: timer init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
 	}
-
+#if 0	
 	rc = sbi_rpxy_init(scratch);
 	if (rc) {
 		sbi_printf("%s: rpxy init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
 	}
+#endif
 
 	/*
 	 * Note: Finalize domains after HSM initialization so that we
@@ -365,7 +366,14 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 			   __func__, rc);
 		sbi_hart_hang();
 	}
-
+#if 1
+	rc = sbi_rpxy_init(scratch);
+	if (rc) {
+		sbi_printf("%s: rpxy init failed (error %d)\n", __func__, rc);
+		sbi_hart_hang();
+	}
+#endif	
+	
 	/*
 	 * Note: Platform final initialization should be after finalizing
 	 * domains so that it sees correct domain assignment and PMP
