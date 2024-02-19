@@ -17,6 +17,7 @@
 /** RPMI ServiceGroups IDs */
 enum rpxy_protocol_id {
 	RPXY_PROT_RPMI = 0,
+	RPXY_PROT_SPD_TEE = 0x00001,
 	RPXY_PROT_ID_MAX_COUNT,
 };
 
