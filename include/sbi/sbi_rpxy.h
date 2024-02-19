@@ -29,6 +29,7 @@ struct sbi_rpxy_service_group {
 	struct sbi_dlist head;
 
 	/** Details identifying this service group */
+	u32 protocol_id;
 	u32 transport_id;
 	u32 service_group_id;
 	unsigned long max_message_data_len;
@@ -58,7 +59,8 @@ struct sbi_rpxy_service_group {
 bool sbi_rpxy_service_group_available(void);
 
 /** Probe RPMI proxy service group */
-int sbi_rpxy_probe(u32 transport_id, u32 service_group_id,
+int sbi_rpxy_probe(u32 protocol_id, u32 transport_id,
+		   u32 service_group_id,
 		   unsigned long *out_max_data_len);
 
 /** Set RPMI proxy shared memory on the calling HART */
@@ -68,14 +70,16 @@ int sbi_rpxy_set_shmem(unsigned long shmem_size,
 		       unsigned long flags);
 
 /** Send a normal/posted RPMI proxy message */
-int sbi_rpxy_send_message(u32 transport_id,
+int sbi_rpxy_send_message(u32 protocol_id,
+			  u32 transport_id,
 			  u32 service_group_id,
 			  u8 service_id,
 			  unsigned long message_data_len,
 			  unsigned long *ack_data_len);
 
 /** Get RPMI proxy notification events */
-int sbi_rpxy_get_notification_events(u32 transport_id, u32 service_group_id,
+int sbi_rpxy_get_notification_events(u32 protocol_id, u32 transport_id,
+					 u32 service_group_id,
 				     unsigned long *events_len);
 
 /** Register a RPMI proxy service group */

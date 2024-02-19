@@ -22,7 +22,7 @@ static int sbi_ecall_rpxy_handler(unsigned long extid, unsigned long funcid,
 
 	switch (funcid) {
 	case SBI_EXT_RPXY_PROBE:
-		ret = sbi_rpxy_probe(regs->a0, regs->a1, out_val);
+		ret = sbi_rpxy_probe(regs->a0, regs->a1, regs->a2, out_val);
 		break;
 	case SBI_EXT_RPXY_SET_SHMEM:
 		ret = sbi_rpxy_set_shmem(regs->a0,
@@ -30,14 +30,14 @@ static int sbi_ecall_rpxy_handler(unsigned long extid, unsigned long funcid,
 		break;
 	case SBI_EXT_RPXY_SEND_NORMAL_MESSAGE:
 		ret = sbi_rpxy_send_message(regs->a0, regs->a1, regs->a2,
-					    regs->a3, out_val);
+					    regs->a3, regs->a4, out_val);
 		break;
 	case SBI_EXT_RPXY_SEND_POSTED_MESSAGE:
 		ret = sbi_rpxy_send_message(regs->a0, regs->a1, regs->a2,
-					    regs->a3, NULL);
+					    regs->a3, regs->a4, NULL);
 		break;
 	case SBI_EXT_RPXY_GET_NOTIFICATION_EVENTS:
-		ret = sbi_rpxy_get_notification_events(regs->a0, regs->a1,
+		ret = sbi_rpxy_get_notification_events(regs->a0, regs->a1, regs->a2,
 							out_val);
 		break;
 	default:

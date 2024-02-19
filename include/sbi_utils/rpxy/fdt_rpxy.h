@@ -14,6 +14,12 @@
 
 #ifdef CONFIG_FDT_RPXY
 
+/** RPMI ServiceGroups IDs */
+enum rpxy_protocol_id {
+	RPXY_PROT_RPMI = 0,
+	RPXY_PROT_ID_MAX_COUNT,
+};
+
 struct fdt_rpxy {
 	const struct fdt_match *match_table;
 	int (*init)(void *fdt, int nodeoff, const struct fdt_match *match);

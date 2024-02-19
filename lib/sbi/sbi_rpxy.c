@@ -39,13 +39,14 @@ static struct sbi_rpxy_service *rpxy_find_service(
 	return NULL;
 }
 
-static struct sbi_rpxy_service_group *rpxy_find_group(u32 transport_id,
+static struct sbi_rpxy_service_group *rpxy_find_group(u32 protocol_id, u32 transport_id,
 						      u32 service_group_id)
 {
 	struct sbi_rpxy_service_group *grp;
 
 	sbi_list_for_each_entry(grp, &rpxy_group_list, head)
-		if (grp->transport_id == transport_id &&
+		if (grp->protocol_id == protocol_id &&
+			grp->transport_id == transport_id &&
 		    grp->service_group_id == service_group_id)
 		    return grp;
 
@@ -57,14 +58,14 @@ bool sbi_rpxy_service_group_available(void)
 	return sbi_list_empty(&rpxy_group_list) ? false : true;
 }
 
-int sbi_rpxy_probe(u32 transport_id, u32 service_group_id,
+int sbi_rpxy_probe(u32 protocol_id, u32 transport_id, u32 service_group_id,
 		   unsigned long *out_max_data_len)
 {
 	int rc = SBI_ENOTSUPP;
 	struct sbi_rpxy_service_group *grp;
 
 	*out_max_data_len = 0;
-	grp = rpxy_find_group(transport_id, service_group_id);
+	grp = rpxy_find_group(protocol_id, transport_id, service_group_id);
 	if (grp) {
 		*out_max_data_len = grp->max_message_data_len;
 		rc = 0;
@@ -102,7 +103,8 @@ int sbi_rpxy_set_shmem(unsigned long shmem_size,
 	return 0;
 }
 
-int sbi_rpxy_send_message(u32 transport_id,
+int sbi_rpxy_send_message(u32 protocol_id,
+			  u32 transport_id,
 			  u32 service_group_id,
 			  u8 service_id,
 			  unsigned long message_data_len,
@@ -119,7 +121,7 @@ int sbi_rpxy_send_message(u32 transport_id,
 	if (!rs->shmem_size)
 		return SBI_ENOSHMEM;
 
-	grp = rpxy_find_group(transport_id, service_group_id);
+	grp = rpxy_find_group(protocol_id, transport_id, service_group_id);
 	if (grp)
 		srv = rpxy_find_service(grp, service_id);
 	if (!srv)
@@ -157,7 +159,8 @@ int sbi_rpxy_send_message(u32 transport_id,
 	return 0;
 }
 
-int sbi_rpxy_get_notification_events(u32 transport_id, u32 service_group_id,
+int sbi_rpxy_get_notification_events(u32 protocol_id, u32 transport_id,
+					 u32 service_group_id,
 				     unsigned long *events_len)
 {
 	int rc;
@@ -168,7 +171,7 @@ int sbi_rpxy_get_notification_events(u32 transport_id, u32 service_group_id,
 	if (!rs->shmem_size)
 		return SBI_ENOSHMEM;
 
-	grp = rpxy_find_group(transport_id, service_group_id);
+	grp = rpxy_find_group(protocol_id, transport_id, service_group_id);
 	if (!grp)
 		return SBI_ENOTSUPP;
 
@@ -209,7 +212,7 @@ int sbi_rpxy_register_service_group(struct sbi_rpxy_service_group *grp)
 			return SBI_EINVAL;
 	}
 
-	if (rpxy_find_group(grp->transport_id, grp->service_group_id))
+	if (rpxy_find_group(grp->protocol_id, grp->transport_id, grp->service_group_id))
 		return SBI_EALREADY;
 
 	SBI_INIT_LIST_HEAD(&grp->head);
