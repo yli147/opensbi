@@ -49,11 +49,9 @@ struct abi_entry_vectors *entry_vector_table = NULL;
 					 FUNCID_TYPE_MASK)
 
 static char spd_domain_name[64];
-static unsigned long spd_abi_addr;
 
 int spd_srv_setup(void *fdt, int nodeoff, const struct fdt_match *match)
 {
-	const fdt32_t *prop_abiaddr;
 	const u32 *prop_instance;
 	int len, offset;
 
@@ -69,11 +67,6 @@ int spd_srv_setup(void *fdt, int nodeoff, const struct fdt_match *match)
 	strncpy(spd_domain_name, fdt_get_name(fdt, offset, NULL),
 		sizeof(spd_domain_name));
 	spd_domain_name[sizeof(spd_domain_name) - 1] = '\0';
-
-	prop_abiaddr = fdt_getprop(fdt, nodeoff, "opensbi-rpxy-tee-abi-addr", &len);
-	if (!prop_abiaddr || len < 4)
-		return SBI_EINVAL;
-	spd_abi_addr = (unsigned long)fdt32_to_cpu(*prop_abiaddr);
 
 	return 0;
 }
@@ -103,6 +96,8 @@ static int sbi_ecall_tee_domain_exit(void)
 	return 0;
 }
 
+static unsigned long *ree_rx = 0;
+static unsigned long *tee_rx = 0;
 static int spd_srv_handler(struct sbi_rpxy_service_group *grp,
 				  struct sbi_rpxy_service *srv,
 				  void *tx, u32 tx_len,
@@ -110,12 +105,10 @@ static int spd_srv_handler(struct sbi_rpxy_service_group *grp,
 				  unsigned long *ack_len)
 {
 	int srv_id = srv->id;
-	unsigned long *spd_abi_args = (void *)spd_abi_addr;
-	unsigned long spd_abi_args_len = tx_len;
-
 	if (SPD_BASE_SRV_COMMUNICATE == srv_id) {
-		sbi_memcpy(spd_abi_args, tx, spd_abi_args_len);
-		if (GET_ABI_ENTRY_TYPE(*spd_abi_args) == ABI_ENTRY_TYPE_FAST) {
+		ree_rx = rx;
+		sbi_memcpy(tee_rx, tx, tx_len);
+		if (GET_ABI_ENTRY_TYPE(tee_rx[0]) == ABI_ENTRY_TYPE_FAST) {
 			sbi_ecall_tee_domain_enter((unsigned long)
 					&entry_vector_table->fast_abi_entry);
 		} else {
@@ -123,11 +116,12 @@ static int spd_srv_handler(struct sbi_rpxy_service_group *grp,
 					&entry_vector_table->yield_abi_entry);
 		}
 	} else if (SPD_BASE_SRV_COMPLETE == srv_id) {
-		if(rx && spd_abi_args_len <= rx_len) {
-			sbi_memcpy(rx, spd_abi_args, spd_abi_args_len);
-			*ack_len = spd_abi_args_len;
+		tee_rx = rx;
+		if(ree_rx) {
+			sbi_memcpy(ree_rx, tx, tx_len);
+			*ack_len = tx_len;
 		} else {
-			entry_vector_table = (struct abi_entry_vectors *) (*spd_abi_args);
+			entry_vector_table = (struct abi_entry_vectors *) (*(unsigned long *)tx);
 		}
 		sbi_ecall_tee_domain_exit();
 	}
