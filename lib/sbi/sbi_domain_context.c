@@ -138,6 +138,7 @@ int sbi_domain_context_exit(void)
 			}
 		}
 	}
+	sbi_printf("sbi_domain_context_exit current_hartid:%d, ctx:%p, dom_ctx:%p \n", current_hartid(), ctx, dom_ctx);
 
 	/* Take the root domain context if fail to find */
 	if (!dom_ctx)
