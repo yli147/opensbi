@@ -67,6 +67,12 @@ struct sbi_rpxy_service_group {
 				       unsigned long *events_len);
 };
 
+/** A RPXY state structure */
+struct rpxy_state {
+	unsigned long shmem_size;
+	unsigned long shmem_addr;
+};
+
 /** Check if some RPMI proxy service group is available */
 bool sbi_rpxy_service_group_available(void);
 
