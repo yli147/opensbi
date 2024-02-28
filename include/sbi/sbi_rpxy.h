@@ -12,6 +12,15 @@
 
 #include <sbi/sbi_list.h>
 
+/** RPXY transport protocol type */
+#define RPXY_TRANS_PROT_MASK	(0xFFFF0000)
+#define RPXY_TRANS_PROT_SHIFT	(16)
+enum rpxy_transport_protocol {
+	RPXY_TRANS_PROT_RPMI = 0,
+	RPXY_TRANS_PROT_SEC = 1,
+	RPXY_TRANS_PROT_ID_MAX_COUNT,
+};
+
 struct sbi_scratch;
 
 /** A RPMI proxy service accessible through SBI interface */
@@ -28,7 +37,11 @@ struct sbi_rpxy_service_group {
 	/** List head to a set of service groups */
 	struct sbi_dlist head;
 
-	/** Details identifying this service group */
+	/**
+	 * Details identifying this service group the transport_id
+	 * NOTE: The transport_id includes uppder 16bits protocol
+	 * * type, and lower 16bits id value.
+	 */
 	u32 transport_id;
 	u32 service_group_id;
 	unsigned long max_message_data_len;

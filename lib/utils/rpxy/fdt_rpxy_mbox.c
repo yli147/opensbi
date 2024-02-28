@@ -92,7 +92,8 @@ static int rpxy_mbox_init(void *fdt, int nodeoff,
 	}
 
 	/* Setup RPXY mbox client */
-	rmb->group.transport_id = chan->mbox->id;
+	rmb->group.transport_id = chan->mbox->id |
+		((RPXY_TRANS_PROT_RPMI << RPXY_TRANS_PROT_SHIFT) & RPXY_TRANS_PROT_MASK);
 	rmb->group.service_group_id = data->service_group_id;
 	rmb->group.max_message_data_len = chan->mbox->max_xfer_len;
 	rmb->group.num_services = data->num_services;
