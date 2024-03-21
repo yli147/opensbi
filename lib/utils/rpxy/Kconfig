@@ -12,5 +12,8 @@ config FDT_RPXY_SPD
 	bool "FDT RPXY SPD client driver"
 	default n
 
+config FDT_RPXY_MM
+	bool "FDT RPXY MM client driver"
+	default n
 endif
 endmenu
