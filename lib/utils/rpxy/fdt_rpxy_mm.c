@@ -38,21 +38,13 @@ enum rpmi_mm_service_id {
 	RPMI_MM_SRV_COMPLETE = 0x03,
 };
 
-struct efi_param_header {
-	uint8_t type;	 /* type of the structure */
-	uint8_t version; /* version of this structure */
-	uint16_t size;	 /* size of this structure in bytes */
-	uint32_t attr;	 /* attributes: unused bits SBZ */
-};
-
-struct efi_secure_partition_cpu_info {
+struct mm_cpu_info {
 	uint64_t mpidr;
 	uint32_t linear_id;
 	uint32_t flags;
 };
 
-struct efi_secure_partition_boot_info {
-	struct efi_param_header header;
+struct mm_boot_info {
 	uint64_t mm_mem_base;
 	uint64_t mm_mem_limit;
 	uint64_t mm_image_base;
@@ -67,40 +59,13 @@ struct efi_secure_partition_boot_info {
 	uint64_t mm_shared_buf_size;
 	uint32_t num_mem_region;
 	uint32_t num_cpus;
-	struct efi_secure_partition_cpu_info *cpu_info;
+	struct mm_cpu_info *cpu_info;
 };
 
-struct efi_secure_shared_buffer {
-	struct efi_secure_partition_boot_info mm_payload_boot_info;
-	struct efi_secure_partition_cpu_info mm_cpu_info[1];
+struct mm_boot_args {
+	struct mm_boot_info boot_info;
+	struct mm_cpu_info cpu_info[SBI_HARTMASK_MAX_BITS];
 };
-
-static void mm_setup_boot_info(uint64_t a1)
-{
-	struct efi_secure_shared_buffer *mm_shared_buffer = (void *)a1;
-	struct efi_secure_partition_boot_info *mm_boot_info =
-		&mm_shared_buffer->mm_payload_boot_info;
-	mm_boot_info->header.version	= 0x01;
-	mm_boot_info->mm_mem_base	= 0x80C00000;
-	mm_boot_info->mm_mem_limit	= 0x82000000;
-	mm_boot_info->mm_image_base	= 0x80C00000;
-	/* Stack from (mm_heap_base + mm_heap_size) to mm_shared_buf_base */
-	mm_boot_info->mm_stack_base	= 0x81D7FFFF;
-	mm_boot_info->mm_heap_base	= 0x80F00000;
-	//mm_boot_info->mm_ns_comm_buf_base	= 0xFFE00000;
-	mm_boot_info->mm_ns_comm_buf_base	= 0x81E00000;
-	mm_boot_info->mm_shared_buf_base	= 0x81D80000;
-	mm_boot_info->mm_image_size	= 0x300000;
-	mm_boot_info->mm_pcpu_stack_size	= 0x10000;
-	mm_boot_info->mm_heap_size			= 0x800000;
-	mm_boot_info->mm_ns_comm_buf_size	= 0x200000;
-	mm_boot_info->mm_shared_buf_size	= 0x80000;
-	mm_boot_info->num_mem_region		= 0x6;
-	mm_boot_info->num_cpus				= 1;
-	mm_shared_buffer->mm_cpu_info[0].linear_id = 0;
-	mm_shared_buffer->mm_cpu_info[0].flags	   = 0;
-	mm_boot_info->cpu_info = mm_shared_buffer->mm_cpu_info;
-}
 
 struct rpxy_mm_data {
 	u32 service_group_id;
@@ -138,11 +103,14 @@ static struct sbi_domain *__get_udomain(void)
 	return NULL;
 }
 
-
 int mm_srv_setup(void *fdt, int nodeoff, const struct fdt_match *match)
 {
-	const u32 *prop_instance;
-	int len, offset;
+	const u32 *prop_instance, *prop_value;
+	u64 base64, size64;
+	int i, len, offset;
+
+	struct mm_boot_args *boot_args = NULL;
+	struct mm_boot_info *boot_info = NULL;
 
 	prop_instance = fdt_getprop(fdt, nodeoff, "opensbi-domain-instance", &len);
 	if (!prop_instance || len < 4) {
@@ -157,7 +125,84 @@ int mm_srv_setup(void *fdt, int nodeoff, const struct fdt_match *match)
 		sizeof(mm_domain_name));
 	mm_domain_name[sizeof(mm_domain_name) - 1] = '\0';
 	
-	mm_setup_boot_info(__get_tdomain()->next_arg1);
+	boot_args = (void *)__get_tdomain()->next_arg1;
+	boot_info = &boot_args->boot_info;
+
+	prop_value = fdt_getprop(fdt, nodeoff, "num-regions", &len);
+	if (!prop_value || len < 4)
+		return SBI_EINVAL;
+	boot_info->num_mem_region = (unsigned long)fdt32_to_cpu(*prop_value);
+	prop_value = fdt_getprop(fdt, nodeoff, "memory-reg", &len);
+	if (!prop_value || len < 16)
+		return SBI_EINVAL;
+	base64 = fdt32_to_cpu(prop_value[0]);
+	base64 = (base64 << 32) | fdt32_to_cpu(prop_value[1]);
+	size64 = fdt32_to_cpu(prop_value[2]);
+	size64 = (size64 << 32) | fdt32_to_cpu(prop_value[3]);
+	boot_info->mm_mem_base	= base64;
+	boot_info->mm_mem_limit	= base64 + size64;
+
+	prop_value = fdt_getprop(fdt, nodeoff, "image-reg", &len);
+	if (!prop_value || len < 16)
+		return SBI_EINVAL;
+	base64 = fdt32_to_cpu(prop_value[0]);
+	base64 = (base64 << 32) | fdt32_to_cpu(prop_value[1]);
+	size64 = fdt32_to_cpu(prop_value[2]);
+	size64 = (size64 << 32) | fdt32_to_cpu(prop_value[3]);
+	boot_info->mm_image_base	= base64;
+	boot_info->mm_image_size	= size64;
+
+	prop_value = fdt_getprop(fdt, nodeoff, "heap-reg", &len);
+	if (!prop_value || len < 16)
+		return SBI_EINVAL;
+	base64 = fdt32_to_cpu(prop_value[0]);
+	base64 = (base64 << 32) | fdt32_to_cpu(prop_value[1]);
+	size64 = fdt32_to_cpu(prop_value[2]);
+	size64 = (size64 << 32) | fdt32_to_cpu(prop_value[3]);
+	boot_info->mm_heap_base	= base64;
+	boot_info->mm_heap_size	= size64;
+
+	prop_value = fdt_getprop(fdt, nodeoff, "stack-reg", &len);
+	if (!prop_value || len < 16)
+		return SBI_EINVAL;
+	base64 = fdt32_to_cpu(prop_value[0]);
+	base64 = (base64 << 32) | fdt32_to_cpu(prop_value[1]);
+	size64 = fdt32_to_cpu(prop_value[2]);
+	size64 = (size64 << 32) | fdt32_to_cpu(prop_value[3]);
+	boot_info->mm_stack_base	= base64 + size64 -1;
+
+	prop_value = fdt_getprop(fdt, nodeoff, "pcpu-stack-size", &len);
+	if (!prop_value || len < 4)
+		return SBI_EINVAL;
+	boot_info->mm_pcpu_stack_size = (unsigned long)fdt32_to_cpu(*prop_value);
+
+	prop_value = fdt_getprop(fdt, nodeoff, "shared-buf", &len);
+	if (!prop_value || len < 16)
+		return SBI_EINVAL;
+	base64 = fdt32_to_cpu(prop_value[0]);
+	base64 = (base64 << 32) | fdt32_to_cpu(prop_value[1]);
+	size64 = fdt32_to_cpu(prop_value[2]);
+	size64 = (size64 << 32) | fdt32_to_cpu(prop_value[3]);
+	boot_info->mm_shared_buf_base	= base64;
+	boot_info->mm_shared_buf_size	= size64;
+
+	prop_value = fdt_getprop(fdt, nodeoff, "ns-comm-buf", &len);
+	if (!prop_value || len < 16)
+		return SBI_EINVAL;
+	base64 = fdt32_to_cpu(prop_value[0]);
+	base64 = (base64 << 32) | fdt32_to_cpu(prop_value[1]);
+	size64 = fdt32_to_cpu(prop_value[2]);
+	size64 = (size64 << 32) | fdt32_to_cpu(prop_value[3]);
+	boot_info->mm_ns_comm_buf_base	= base64;
+	boot_info->mm_ns_comm_buf_size	= size64;
+
+	boot_info->num_cpus = 0;
+	sbi_hartmask_for_each_hartindex(i, __get_tdomain()->possible_harts) {
+		boot_args->cpu_info[i].linear_id = sbi_hartindex_to_hartid(i);
+		boot_args->cpu_info[i].flags = 0;
+		boot_info->num_cpus += 1;
+	}
+	boot_info->cpu_info = boot_args->cpu_info;
 
 	return 0;
 }
