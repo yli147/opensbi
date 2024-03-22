@@ -246,7 +246,7 @@ static int mm_srv_handler(struct sbi_rpxy_service_group *grp,
 		/* Get per-hart RPXY share memory with tdomain */
 		rs = sbi_hartindex_to_domain_rs(
 			sbi_hartid_to_hartindex(current_hartid()), __get_tdomain());
-		if (rs->shmem_addr) {
+		if (rs->shmem_addr && tx && ((void *)rs->shmem_addr != tx)) {
 			sbi_memcpy((void *)rs->shmem_addr, tx, tx_len);
 		}
 		
@@ -255,9 +255,10 @@ static int mm_srv_handler(struct sbi_rpxy_service_group *grp,
 		/* Get per-hart RPXY share memory with udomain */
 		rs = sbi_hartindex_to_domain_rs(
 			sbi_hartid_to_hartindex(current_hartid()), __get_udomain());
-		if (rs->shmem_addr) {
+		if (rs->shmem_addr && tx && ((void *)rs->shmem_addr != tx)) {
 			sbi_memcpy((void *)rs->shmem_addr, tx, tx_len);
-		} 
+		}
+
 		sbi_ecall_mm_domain_exit();
 	}
 
