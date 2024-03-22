@@ -78,6 +78,16 @@
 		reg = <0x01 0x00 0x00 0x80000000>;
 	};
 
+	reserved-memory {
+		#address-cells = <0x2>;
+		#size-cells = <0x2>;
+		ranges;
+		mmode_resv0@FFE00000 {
+			no-map;
+			reg = <0 0xFFE00000 0 0x200000>;
+		};
+	};
+
 	cpus {
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
@@ -197,7 +207,6 @@
 		sbi-rpxy-mm {
 			compatible = "riscv,sbi-rpxy-mm";
 			opensbi-domain-instance = <&tdomain>;
-			mm-version = <0x01>;
 			num-regions = <0x06>;
 			memory-reg = <0x0 0x80C00000 0x0 0x1400000>;
 			image-reg = <0x0 0x80C00000 0x0 0x300000>;
@@ -205,7 +214,8 @@
 			stack-reg = <0x0 0x81700000 0x0 0x680000>;
 			pcpu-stack-size = <0x0 0x10000>;
 			shared-buf = <0x0 0x81D80000 0x0 0x80000>;
-			ns-comm-buf = <0x0 0x81E00000 0x0 0x200000>;
+			// ns-comm-buf = <0x0 0x81E00000 0x0 0x200000>;
+			ns-comm-buf = <0x0 0xFFE00000 0x0 0x200000>;
 		};
 
 		mailbox@10001000 {
