@@ -543,4 +543,11 @@ struct rpmi_ras_sync_err_resp {
 	u32 pending_vecs[MAX_PEND_VECS];
 };
 
+/** RPMI SMM ServiceGroup Service IDs */
+enum rpmi_smm_service_id {
+	RPMI_SMM_SRV_VER = 0x01,
+	RPMI_SMM_SRV_COMMUNICATE,
+	RPMI_SMM_SRV_COMPLETE,
+};
+
 #endif /* !__RPMI_MSGPROT_H__ */
