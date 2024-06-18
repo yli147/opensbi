@@ -90,6 +90,18 @@ static struct sbi_console_device uart8250_console = {
 	.console_getc = uart8250_getc
 };
 
+static void uart8250_pinmux_init(void)
+{
+    u32 pinmux = readl((volatile void *)0xD401E124);
+    pinmux &= 0xFFFFFFF8;
+    pinmux |= 2;
+    writel(pinmux, (volatile void *)0xD401E124);
+    pinmux = readl((volatile void *)0xD401E128);
+    pinmux &= 0xFFFFFFF8;
+    pinmux |= 2;
+    writel(pinmux, (volatile void *)0xD401E128);
+}
+
 int uart8250_init(unsigned long base, u32 in_freq, u32 baudrate, u32 reg_shift,
 		  u32 reg_width, u32 reg_offset)
 {
@@ -100,6 +112,8 @@ int uart8250_init(unsigned long base, u32 in_freq, u32 baudrate, u32 reg_shift,
 	uart8250_reg_width = reg_width;
 	uart8250_in_freq   = in_freq;
 	uart8250_baudrate  = baudrate;
+
+	uart8250_pinmux_init();
 
 	if (uart8250_baudrate) {
 		bdiv = (uart8250_in_freq + 8 * uart8250_baudrate) /
