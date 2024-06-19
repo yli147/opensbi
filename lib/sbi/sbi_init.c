@@ -262,7 +262,6 @@ static void wake_coldboot_harts(struct sbi_scratch *scratch, u32 hartid)
 
 static unsigned long entry_count_offset;
 static unsigned long init_count_offset;
-
 static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 {
 	int rc;
@@ -421,10 +420,11 @@ static void __noreturn init_warm_startup(struct sbi_scratch *scratch,
 	if (rc)
 		sbi_hart_hang();
 
+#if 0
 	rc = sbi_platform_early_init(plat, false);
 	if (rc)
 		sbi_hart_hang();
-
+#endif
 	rc = sbi_hart_init(scratch, false);
 	if (rc)
 		sbi_hart_hang();

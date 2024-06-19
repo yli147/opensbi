@@ -158,7 +158,6 @@ extern unsigned char _data_start[];
 extern unsigned char _data_end[];
 extern unsigned char _bss_start[];
 extern unsigned char _bss_end[];
-
 void __noreturn sbi_hsm_hart_start_finish(struct sbi_scratch *scratch,
 					  u32 hartid, bool cool_boot)
 {
@@ -184,8 +183,8 @@ void __noreturn sbi_hsm_hart_start_finish(struct sbi_scratch *scratch,
 	if (cool_boot) {
 		csi_flush_dcache_all();
 		csi_flush_l2_cache(0);
-	}
-
+	} 
+	sbi_printf("sbi_hsm_hart_start_finish %d %lx %lx %lx %d\n", hartid, next_arg1, next_addr, next_mode, cool_boot);
 	sbi_hart_switch_mode(hartid, next_arg1, next_addr, next_mode, false);
 }
 
