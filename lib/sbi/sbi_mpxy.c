@@ -17,6 +17,7 @@
 #include <sbi/sbi_string.h>
 #include <sbi/sbi_bitops.h>
 #include <sbi/sbi_console.h>
+#include <sbi/sbi_byteorder.h>
 #include <sbi/sbi_domain.h>
 #include <sbi/sbi_heap.h>
 
@@ -210,8 +211,8 @@ int sbi_mpxy_set_shmem(unsigned long shmem_size, unsigned long shmem_phys_lo,
 		       unsigned long shmem_phys_hi, unsigned long flags)
 {
 	struct mpxy_state *rs = sbi_domain_rs_thishart_ptr();
-
-	struct mpxy_state prev_rs;
+	unsigned long *ret_buf;
+	//struct mpxy_state prev_rs;
 
 	/** Disable shared memory if both hi and lo have all bit 1s */
 	if (shmem_phys_lo == INVALID_ADDR &&
@@ -260,9 +261,7 @@ int sbi_mpxy_get_channel_ids(u32 start_index)
 	u32 *shmem_base;
 	struct sbi_mpxy_channel *channel;
 
-	/* Check if the shared memory is being setup or not. */
-	struct mpxy_state *rs =
-		sbi_scratch_thishart_offset_ptr(mpxy_state_offset);
+	struct mpxy_state *rs = sbi_domain_rs_thishart_ptr();
 
 	if (!mpxy_shmem_enabled(rs))
 		return SBI_ERR_NO_SHMEM;

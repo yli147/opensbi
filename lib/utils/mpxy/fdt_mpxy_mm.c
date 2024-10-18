@@ -76,7 +76,7 @@ static struct sbi_domain *__get_domain(char* name)
 	return NULL;
 }
 
-static int mpxy_mm_setup_bootinfo(void *fdt, int nodeoff, const struct fdt_match *match)
+static int mpxy_mm_setup_bootinfo(const void *fdt, int nodeoff, const struct fdt_match *match)
 {
 	const u32 *prop_instance, *prop_value;
 	u64 base64, size64;
@@ -234,7 +234,7 @@ static int mpxy_mm_send_message(struct sbi_mpxy_channel *channel,
 	return SBI_OK;
 }
 
-static int mpxy_mm_init(void *fdt, int nodeoff,
+static int mpxy_mm_init(const void *fdt, int nodeoff,
 			  const struct fdt_match *match)
 {
 	int rc;
