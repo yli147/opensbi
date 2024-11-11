@@ -17,7 +17,7 @@
 #define RISCV_MSG_ID_SMM_VERSION		0x1
 #define RISCV_MSG_ID_SMM_COMMUNICATE	0x2
 #define RISCV_MSG_ID_SMM_EVENT_COMPLETE 0x3
-#define RISCV_MSG_SMM_MAX_LEN	16
+#define RISCV_MSG_SMM_MAX_LEN	64
 
 #define SMM_VERSION_MAJOR        1
 #define SMM_VERSION_MAJOR_SHIFT  16
@@ -215,11 +215,25 @@ static int mpxy_mm_send_message(struct sbi_mpxy_channel *channel,
 			    unsigned long *ack_len)
 {
 	if (RISCV_MSG_ID_SMM_VERSION == msg_id) {
+		uint32_t status = 0;
 		uint32_t version = SMM_VERSION_COMPILED;
+		uint32_t smmlo = 0xFFE00000;
+		uint32_t smmhi = 0x0;
+		uint32_t smmsize = 0x200000;
+		uint32_t offset = 0;
 		if(respbuf) {
-			sbi_memcpy((void *)respbuf, &version, sizeof(version));
+			sbi_memcpy((void *)respbuf, &status, sizeof(status));
+			offset += sizeof(status);
+			sbi_memcpy((void *)respbuf + offset, &version, sizeof(version));
+			offset += sizeof(version);
+			sbi_memcpy((void *)respbuf + offset, &smmlo, sizeof(smmlo));
+			offset += sizeof(smmlo);
+			sbi_memcpy((void *)respbuf + offset, &smmhi, sizeof(smmhi));
+			offset += sizeof(smmhi);
+			sbi_memcpy((void *)respbuf + offset, &smmsize, sizeof(smmsize));
+			offset += sizeof(smmsize);	
 			if (ack_len)
-				*ack_len = sizeof(version);
+				*ack_len = offset;
 		}
 	} else if (RISCV_MSG_ID_SMM_EVENT_COMPLETE == msg_id) {
 		mpxy_mm_swap_msg(msgbuf, respbuf, msg_len, ack_len);
