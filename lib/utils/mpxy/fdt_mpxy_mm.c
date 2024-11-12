@@ -12,6 +12,7 @@
 #include <sbi_utils/mpxy/fdt_mpxy.h>
 #include <sbi/sbi_domain.h>
 #include <sbi/sbi_console.h>
+#include <sbi/sbi_sse.h>
 #include <sbi_utils/mailbox/rpmi_msgprot.h>
 
 #define RISCV_MSG_ID_SMM_VERSION		0x1
@@ -236,17 +237,38 @@ static int mpxy_mm_send_message(struct sbi_mpxy_channel *channel,
 				*ack_len = offset;
 		}
 	} else if (RISCV_MSG_ID_SMM_EVENT_COMPLETE == msg_id) {
+		//TBD to change RISCV_MSG_ID_SMM_EVENT_COMPLETE to MPXY RQFWD Retrieve
 		mpxy_mm_swap_msg(msgbuf, respbuf, msg_len, ack_len);
-		sbi_domain_context_exit();
 	} else if (RISCV_MSG_ID_SMM_COMMUNICATE == msg_id) {
 		mpxy_mm_swap_msg(msgbuf, respbuf, msg_len, ack_len);
 		sbi_domain_context_enter(tdomain);
+		// TBD change SBI_SSE_EVENT_LOCAL_SOFTWARE to a SBI SSE MPXY Notifaication
+		sbi_sse_inject_event(SBI_SSE_EVENT_LOCAL_MPXY_NOTIF);
 	} else {
 		return SBI_EFAIL;
 	}
 
 	return SBI_OK;
 }
+
+static void mm_sse_enable(uint32_t event_id)
+{
+}
+
+static void mm_sse_disable(uint32_t event_id)
+{
+
+}
+
+static void mm_sse_complete(uint32_t event_id)
+{
+    sbi_domain_context_exit();
+}
+static const struct sbi_sse_cb_ops mm_sse_cb_ops = {
+        .enable_cb = mm_sse_enable,
+        .disable_cb = mm_sse_disable,
+        .complete_cb = mm_sse_complete,
+};
 
 static int mpxy_mm_init(const void *fdt, int nodeoff,
 			  const struct fdt_match *match)
@@ -275,6 +297,8 @@ static int mpxy_mm_init(const void *fdt, int nodeoff,
 		sbi_free(channel);
 		return rc;
 	}
+
+	sbi_sse_set_cb_ops(SBI_SSE_EVENT_LOCAL_MPXY_NOTIF, &mm_sse_cb_ops);
 
 	return 0;
 }
