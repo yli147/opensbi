@@ -12,10 +12,11 @@
 #include <sbi_utils/mpxy/fdt_mpxy.h>
 #include <sbi/sbi_domain.h>
 #include <sbi/sbi_console.h>
+#include <sbi/sbi_sse.h>
 #include <sbi_utils/mailbox/rpmi_msgprot.h>
 
 #define RISCV_MSG_ID_SMM_VERSION		0x1
-#define RISCV_MSG_ID_SMM_COMMUNICATE	0x2
+#define RISCV_MSG_ID_SMM_COMMUNICATE	0x4
 #define RISCV_MSG_ID_SMM_EVENT_COMPLETE 0x3
 #define RISCV_MSG_SMM_MAX_LEN	64
 
@@ -29,6 +30,11 @@
                                        (minor))
 #define SMM_VERSION_COMPILED     SMM_VERSION_FORM(SMM_VERSION_MAJOR, \
                                                 SMM_VERSION_MINOR)
+
+// RPMI Messages
+#define RPMI_REQFWD_ENABLE_NOTIFICATION       0x1
+#define RPMI_REQFWD_RETRIEVE_CURRENT_MESSAGE  0x2
+#define RPMI_REQFWD_COMPLETE_CURRENT_MESSAGE  0x3
 
 struct mm_cpu_info {
 	u64 mpidr;
@@ -188,26 +194,20 @@ static int mpxy_mm_setup_bootinfo(const void *fdt, int nodeoff, const struct fdt
 	return 0;
 }
 
-static void mpxy_mm_swap_msg(void *msgbuf, void *respbuf, u32 msg_len, unsigned long *ack_len)
-{
-	static void *_msgbuf = NULL;
-	static void *_respbuf = NULL;
-	static unsigned long *_ack_len = NULL;
+#include <sbi/sbi_fifo.h>
+struct mm_msg_comm {
+	void* msgbuf;
+	u32 msg_len;
+	void* respbuf;
+	u32 resp_len;
+	unsigned long *ack_len;
+};
 
-	if(_msgbuf && msgbuf) {
-		sbi_memcpy(_msgbuf, msgbuf, msg_len);
-	}
-	if(_respbuf && respbuf) {
-		sbi_memcpy(_respbuf, respbuf, msg_len);
-	}
-
-	if (_ack_len)
-		*_ack_len = msg_len;
-
-	_msgbuf = msgbuf;
-	_respbuf = respbuf;
-	_ack_len = ack_len;
-}
+#define MM_MSG_BUFFER_SIZE       8
+static struct mm_msg_comm mm_msg_buffer[MM_MSG_BUFFER_SIZE] = { 0 };
+static SBI_FIFO_DEFINE(mm_msg_fifo, mm_msg_buffer, \
+                       MM_MSG_BUFFER_SIZE, sizeof(struct mm_msg_comm));
+static struct mm_msg_comm current_msg;
 
 static int mpxy_mm_send_message(struct sbi_mpxy_channel *channel,
 				  u32 msg_id, void *msgbuf, u32 msg_len,
@@ -216,37 +216,59 @@ static int mpxy_mm_send_message(struct sbi_mpxy_channel *channel,
 {
 	if (RISCV_MSG_ID_SMM_VERSION == msg_id) {
 		uint32_t status = 0;
-		uint32_t version = SMM_VERSION_COMPILED;
-		uint32_t smmlo = 0xFFE00000;
-		uint32_t smmhi = 0x0;
-		uint32_t smmsize = 0x200000;
 		uint32_t offset = 0;
-		if(respbuf) {
-			sbi_memcpy((void *)respbuf, &status, sizeof(status));
-			offset += sizeof(status);
-			sbi_memcpy((void *)respbuf + offset, &version, sizeof(version));
-			offset += sizeof(version);
-			sbi_memcpy((void *)respbuf + offset, &smmlo, sizeof(smmlo));
-			offset += sizeof(smmlo);
-			sbi_memcpy((void *)respbuf + offset, &smmhi, sizeof(smmhi));
-			offset += sizeof(smmhi);
-			sbi_memcpy((void *)respbuf + offset, &smmsize, sizeof(smmsize));
-			offset += sizeof(smmsize);	
+		uint32_t version = SMM_VERSION_COMPILED;
+		sbi_memcpy((void *)respbuf, &status, sizeof(status));
+		offset += sizeof(status);
+		sbi_memcpy((void *)respbuf, &version, sizeof(version));
+					offset += sizeof(version);
 			if (ack_len)
 				*ack_len = offset;
-		}
-	} else if (RISCV_MSG_ID_SMM_EVENT_COMPLETE == msg_id) {
-		mpxy_mm_swap_msg(msgbuf, respbuf, msg_len, ack_len);
-		sbi_domain_context_exit();
+	} else if (RPMI_REQFWD_RETRIEVE_CURRENT_MESSAGE == msg_id) {
+		sbi_fifo_dequeue(&mm_msg_fifo, &current_msg);
+		sbi_memcpy(respbuf, current_msg.msgbuf, current_msg.msg_len);
+		*ack_len = current_msg.msg_len;
+	} else if (RPMI_REQFWD_COMPLETE_CURRENT_MESSAGE == msg_id) {
+		sbi_memcpy(current_msg.respbuf, msgbuf, msg_len);
+		current_msg.resp_len = msg_len;
 	} else if (RISCV_MSG_ID_SMM_COMMUNICATE == msg_id) {
-		mpxy_mm_swap_msg(msgbuf, respbuf, msg_len, ack_len);
+		struct mm_msg_comm msg;
+		msg.msgbuf = msgbuf;
+		msg.msg_len = msg_len;
+		msg.respbuf = respbuf;
+		msg.ack_len = ack_len;
+		msg.resp_len = 0;
+		sbi_fifo_enqueue(&mm_msg_fifo, &msg, true);
 		sbi_domain_context_enter(tdomain);
+		sbi_sse_inject_event(SBI_SSE_EVENT_LOCAL_MPXY_NOTIF);
 	} else {
 		return SBI_EFAIL;
 	}
 
 	return SBI_OK;
 }
+
+static void mm_sse_enable(uint32_t event_id)
+{
+}
+
+static void mm_sse_disable(uint32_t event_id)
+{
+
+}
+
+static void mm_sse_complete(uint32_t event_id)
+{
+	if(current_msg.ack_len) {
+		*(current_msg.ack_len) = current_msg.resp_len;
+	}
+	sbi_domain_context_exit();
+}
+static const struct sbi_sse_cb_ops mm_sse_cb_ops = {
+        .enable_cb = mm_sse_enable,
+        .disable_cb = mm_sse_disable,
+        .complete_cb = mm_sse_complete,
+};
 
 static int mpxy_mm_init(const void *fdt, int nodeoff,
 			  const struct fdt_match *match)
@@ -269,12 +291,14 @@ static int mpxy_mm_init(const void *fdt, int nodeoff,
 	channel->channel_id = mm_channel_id;
 	channel->send_message = mpxy_mm_send_message;
 	channel->attrs.msg_data_maxlen = RISCV_MSG_SMM_MAX_LEN;
-
+	channel->attrs.sse_event_id = SBI_SSE_EVENT_LOCAL_MPXY_NOTIF;
 	rc = sbi_mpxy_register_channel(channel);
 	if (rc) {
 		sbi_free(channel);
 		return rc;
 	}
+
+	sbi_sse_set_cb_ops(SBI_SSE_EVENT_LOCAL_MPXY_NOTIF, &mm_sse_cb_ops);
 
 	return 0;
 }
